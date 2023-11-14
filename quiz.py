@@ -28,7 +28,7 @@ def get_question_answer_bank():
 
 def get_question_bank():
     
-    return question_bank
+    return list(question_bank.items())
 
 print(get_question_bank())
 #print(get_question_answer_bank())
@@ -45,10 +45,10 @@ def show_random_question(question_bank, question):
     while question_bank:
         if question == "yes":
             number = 1
-            for question in question_bank.items():
+            for question in question_bank:
                 print(f"Question {number}:")
                 number += 1
-                print(random.choice(list(question_bank.items())))
+                print(random.choice(question_bank))
                 answer_question()
         else:
             return None
@@ -60,7 +60,6 @@ def start_random_quiz():
     show_random_question(get_question_bank(), question)   
 
 start_random_quiz()
-
 
 #for question,choice,answer in question_answer_bank.items():
     
