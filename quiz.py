@@ -44,12 +44,13 @@ def show_random_question(question):
 #answering a question    
 def answer_question():
     total_score = 0 # initialize total_score outside the loop
+    incorrect_questions = {}
+    number_wrong = 0
     for q_text in question_bank:
         score = 0
         attempts = 0 # initialize the number of attempts a player can make
         correct = 1
         wrong = -1
-        incorrect_questions = []
         while attempts < 4:
             answer = str(input(f"Write your answer for '{q_text}': ")) # ask for the answer in the while loop so it asks for every attempt
             if answer == question_answer_bank[q_text]: # if answer = answer in question_answer_bank dict
@@ -60,26 +61,34 @@ def answer_question():
             else:
                 print("Try again")
                 print(f"You received {wrong} point for that question!") #print message for points deducted for the question
-                if q_text not in incorrect_questions:
-                    incorrect_questions.append(q_text)
+                number_wrong += 1
                 score -= 1
                 attempts += 1
+
+                if q_text not in incorrect_questions: #if the question is not already in incorrect_questions 
+                    incorrect_questions[q_text] = question_answer_bank[q_text]
+                elif number_wrong == 0:
+                    print("You got none wrong, well done! Here's a prize!")       
         else:
             # print this if they run out of attempts (exits the while loop)
             print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}")
         
         total_score += score  # add the score for the current question to the total score
-        
+        # return incorrect_questions
 
     print(f"\nYour final score was {total_score}")
+    print(f"\nYou got {number_wrong} questions wrong.")
+    #test if it is adding incorrect questions:
     print(incorrect_questions)
 
-# def reattempt_questions():
+# def reattempt_questions(incorrect_q):
+#     for question in incorrect_q: #incorrect_q = list from answer_question function
+        
 
 #main function to run quiz
 def start_random_quiz():
     start = input("Do you want to start the random quiz? If so, type yes.")
     show_random_question(start)   
     answer_question()
-
+    # reattempt_questions(answer_question())
 start_random_quiz()
