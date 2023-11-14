@@ -1,0 +1,10 @@
+Python app that:
+1. Allows you to add questions to the app
+2. Allows you to add answers for the questions
+3. Allows you to shuffle the questions
+4. Can start the quiz and receive a score
+5. Re-attempt the incorrect ones
+6. Saves the questions and answers with what you got wrong andright in a csv file
+7. Give feedback on questions wrong and save score
+8. show progress over time using plot
+
