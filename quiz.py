@@ -33,8 +33,8 @@ def get_question_bank():
 def show_random_question(question):
     if question == "yes":
         number = 1
-        for question, choices in question_bank.items():
-            print(f"Question {number}: {question_text}")
+        for q, choices in question_bank.items():
+            print(f"Question {number}: {q}")
             number += 1
             print("Choices:", choices)
     else:
@@ -47,14 +47,21 @@ def answer_question():
     for q_text in question_bank:
         score = 0
         attempts = 0 # initialize the number of attempts a player can make
+        correct = 1
+        wrong = -1
+        incorrect_questions = []
         while attempts < 4:
             answer = str(input(f"Write your answer for '{q_text}': ")) # ask for the answer in the while loop so it asks for every attempt
             if answer == question_answer_bank[q_text]: # if answer = answer in question_answer_bank dict
                 print('Correct!')
                 score += 1 # add one to score if they get a question correct
+                print(f"You received {correct} point for that question!") #give the no. of points received for the question
                 break  # Exit the loop if the answer is correct
             else:
                 print("Try again")
+                print(f"You received {wrong} point for that question!") #print message for points deducted for the question
+                if q_text not in incorrect_questions:
+                    incorrect_questions.append(q_text)
                 score -= 1
                 attempts += 1
         else:
@@ -62,17 +69,17 @@ def answer_question():
             print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}")
         
         total_score += score  # add the score for the current question to the total score
-        print(f"Your current score is: {total_score}")
+        
 
     print(f"\nYour final score was {total_score}")
+    print(incorrect_questions)
 
+# def reattempt_questions():
 
+#main function to run quiz
 def start_random_quiz():
     start = input("Do you want to start the random quiz? If so, type yes.")
     show_random_question(start)   
     answer_question()
 
 start_random_quiz()
-
-#for question,choice,answer in question_answer_bank.items():
-    
