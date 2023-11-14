@@ -41,24 +41,30 @@ def show_random_question(question):
         return None
 
 #answering a question    
+#answering a question    
 def answer_question():
-     score = 0 #initialise the score
-     for q_text in question_bank: #each question in the question bank
-        answer = str(input("Write your answer here: "))
-        attempts = 0 #initialise the number of attempts a player can make
+    total_score = 0 # initialize total_score outside the loop
+    for q_text in question_bank:
+        score = 0
+        attempts = 0 # initialize the number of attempts a player can make
         while attempts < 4:
-            if answer == question_answer_bank[q_text]: #if answer = answer in question_answer_bank dict
+            answer = str(input(f"Write your answer for '{q_text}': ")) # ask for the answer in the while loop so it asks for every attempt
+            if answer == question_answer_bank[q_text]: # if answer = answer in question_answer_bank dict
                 print('Correct!')
-                score += 1 #add one to score if they get a question correct
-                break  #Exit the loop if the answer is correct
+                score += 1 # add one to score if they get a question correct
+                break  # Exit the loop if the answer is correct
             else:
                 print("Try again")
                 score -= 1
                 attempts += 1
         else:
-            #print this if they run out of attempts (exits the while loop)
-            print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}") 
-        print(f"Your score was {score}")
+            # print this if they run out of attempts (exits the while loop)
+            print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}")
+        
+        total_score += score  # add the score for the current question to the total score
+        print(f"Your current score is: {total_score}")
+
+    print(f"\nYour final score was {total_score}")
 
 
 def start_random_quiz():
