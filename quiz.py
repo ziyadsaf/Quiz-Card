@@ -27,37 +27,33 @@ def get_question_answer_bank():
     return question_answer_bank
 
 def get_question_bank():
-    
-    return list(question_bank.items())
+    return question_bank
 
-print(get_question_bank())
-#print(get_question_answer_bank())
-
-#answer a question
-def answer_question():
-    for question in question_answer_bank:
-        if question == question_bank:
-            answer = str(input("Write your answer here: "))
-            if answer in question_answer_bank[question]:
-                print('Correct!')
 #show questions in succession
 def show_random_question(question_bank, question):
-    while question_bank:
-        if question == "yes":
-            number = 1
-            for question in question_bank:
-                print(f"Question {number}:")
-                number += 1
-                print(random.choice(question_bank))
-                answer_question()
+    if question == "yes":
+        number = 1
+        for question, choices in question_bank.items():
+            print(f"Question {number}: {question_text}")
+            number += 1
+            print("Choices:", choices)
+    else:
+        return None
+
+#answering a question    
+def answer_question():
+     for question, choices in question_bank.items():
+        answer = str(input("Write your answer here: "))
+        if answer == question_answer_bank[question]:
+            print('Correct!')
         else:
-            return None
-        
+            print("Try again")
 
 
 def start_random_quiz():
     question = input("Do you want to start the random quiz? If so, type yes.")
     show_random_question(get_question_bank(), question)   
+    answer_question()
 
 start_random_quiz()
 
