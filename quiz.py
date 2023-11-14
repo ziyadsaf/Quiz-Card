@@ -30,7 +30,7 @@ def get_question_bank():
     return question_bank
 
 #show questions in succession
-def show_random_question(question_bank, question):
+def show_random_question(question):
     if question == "yes":
         number = 1
         for question, choices in question_bank.items():
@@ -42,17 +42,28 @@ def show_random_question(question_bank, question):
 
 #answering a question    
 def answer_question():
-     for question, choices in question_bank.items():
+     score = 0 #initialise the score
+     for q_text in question_bank: #each question in the question bank
         answer = str(input("Write your answer here: "))
-        if answer == question_answer_bank[question]:
-            print('Correct!')
+        attempts = 0 #initialise the number of attempts a player can make
+        while attempts < 4:
+            if answer == question_answer_bank[q_text]: #if answer = answer in question_answer_bank dict
+                print('Correct!')
+                score += 1 #add one to score if they get a question correct
+                break  #Exit the loop if the answer is correct
+            else:
+                print("Try again")
+                score -= 1
+                attempts += 1
         else:
-            print("Try again")
+            #print this if they run out of attempts (exits the while loop)
+            print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}") 
+        print(f"Your score was {score}")
 
 
 def start_random_quiz():
-    question = input("Do you want to start the random quiz? If so, type yes.")
-    show_random_question(get_question_bank(), question)   
+    start = input("Do you want to start the random quiz? If so, type yes.")
+    show_random_question(start)   
     answer_question()
 
 start_random_quiz()
