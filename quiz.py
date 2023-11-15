@@ -88,24 +88,36 @@ def answer_question():
 
 def reattempt_questions(incorrect_q):
     question_reattempt = list(incorrect_q.keys())
-    attempts = 0
-    reattempt_questions_wrong = {}
+    reattempt_questions = []  # store just the questions they failed to reattempt
+    reattempt_questions_answers = {}  # store the questions they failed to reattempt with their answers
     for incorrect_question in question_reattempt:
-        correct_answer = incorrect_q[incorrect_question]
+        correct_answer = incorrect_q[incorrect_question]  # correct answer from the original dict passed into function
+        choices = question_bank[incorrect_question] #list of choices for each question
+        attempts = 0  # reset attempts to zero for each question
         while attempts < 4:
-            answer = input(f"Please answer the following question again:\n{incorrect_question}: ")
+            # Display the question and choices before asking them to answer it
+            print(f"Question: {incorrect_question}")
+            print("Choices:", choices)
+            
+            answer = input("Your answer: ")
             if answer == correct_answer:
-                print("That is now correct! Well done.")
-                incorrect_q.pop(incorrect_question)
+                print("That is now correct! Well done.\nThat question will be removed from your incorrect questions list.")
+                incorrect_q.pop(incorrect_question)  # remove the incorrect question as it is now correct
                 break
             else:
+                attempts += 1
                 print("Try Again")
         else:
-            #add questions they got wrong with their answer in dict
-            reattempt_questions_wrong[incorrect_question] = correct_answer 
-            return reattempt_questions_wrong
+            print("You have run out of attempts for that question!\n You will get a chance to try again later")
+            reattempt_questions.append(incorrect_question)
+            # add questions they got wrong with their answer in dict
+            reattempt_questions_answers[incorrect_question] = correct_answer
 
-    print("Well done, you have now got all the questions correct!")
+    # if none are wrong
+    if not reattempt_questions:
+        print("Well done, you have now got all the questions correct!")
+
+    return reattempt_questions, reattempt_questions_answers
 
 # main function to run quiz
 def start_random_quiz():
@@ -113,6 +125,28 @@ def start_random_quiz():
     show_random_question(start)
     incorrect_questions = answer_question()
     if incorrect_questions: #if there are incorrect questions in the list then run reattempt_questions
-        reattempt_questions(incorrect_questions)
-
+        reattempt_choice = input("Would you like to reattempt the questions you got wrong?")
+        if reattempt_choice == "yes":
+            print("Ok, here are your incorrect questions.\n Think carefully before answering!")
+            reattempt_questions(incorrect_questions)
+        else:
+            print("Ok, thanks for playing the quiz. You missed out on correcting the ones you got wrong though...")
+            sys.exit()
+    #separate tuple from reattempt_questions
+    incorrect_reattempt_only, incorrect_reattempt_answers = reattempt_questions(incorrect_questions)
+    if incorrect_reattempt_only or incorrect_reattempt_answers:
+        wrong_questions = str(input("Would you like to see the questions you couldn't do after re-attempting them?"))
+        if wrong_questions.lower() == "yes":
+            print("Here are the questions you couldn't answer...\n")
+            for incorrect_reattempt in incorrect_reattempt_only:
+                print(incorrect_reattempt)
+            show_answer = input("Would you like to look at the answers for these questions?")
+            if show_answer.lower() == "yes":
+                for question, answer in incorrect_reattempt_answers.items():
+                    print(f"Question: {question}, Answer: {answer}")
+            else:
+                print("Ok, thanks for playing the quiz!")
+        else:
+            print("Ok, thanks for playing the quiz!")
+    print("Thanks for playing!")
 start_random_quiz()
