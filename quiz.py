@@ -51,12 +51,14 @@ def answer_question():
         attempts = 0 # initialize the number of attempts a player can make
         correct = 1
         wrong = -1
-        while attempts < 4:
+        loop = len(question_bank)
+        while attempts < 4 and loop > 0:
             answer = str(input(f"Write your answer for '{q_text}': ")) # ask for the answer in the while loop so it asks for every attempt
             if answer == question_answer_bank[q_text]: # if answer = answer in question_answer_bank dict
                 print('Correct!')
                 score += 1 # add one to score if they get a question correct
                 print(f"You received {correct} point for that question!") #give the no. of points received for the question
+                loop -= 1
                 break  # Exit the loop if the answer is correct
             else:
                 print("Try again")
@@ -74,21 +76,34 @@ def answer_question():
             print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}")
         
         total_score += score  # add the score for the current question to the total score
-        # return incorrect_questions
+        
 
     print(f"\nYour final score was {total_score}")
     print(f"\nYou got {number_wrong} questions wrong.")
     #test if it is adding incorrect questions:
-    print(incorrect_questions)
+    return incorrect_questions
 
-# def reattempt_questions(incorrect_q):
-#     for question in incorrect_q: #incorrect_q = list from answer_question function
-        
+def reattempt_questions(incorrect_q):
+    questions_to_reattempt = list(incorrect_q.keys())
+    for incorrect_question in questions_to_reattempt:
+        correct_answer = incorrect_q[incorrect_question]
+        while True:
+            answer = input(f"Please answer the following question again:\n{incorrect_question}: ")
+            if answer == correct_answer:
+                print("That is now correct! Well done.")
+                incorrect_q.pop(incorrect_question)
+                break
+            else:
+                print("Try Again")
 
-#main function to run quiz
+
+# main function to run quiz
 def start_random_quiz():
     start = input("Do you want to start the random quiz? If so, type yes.")
-    show_random_question(start)   
-    answer_question()
-    # reattempt_questions(answer_question())
+    show_random_question(start)
+    incorrect_questions = answer_question()
+
+    if incorrect_questions:
+        reattempt_questions(incorrect_questions)
+
 start_random_quiz()
