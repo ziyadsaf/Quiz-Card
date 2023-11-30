@@ -2,6 +2,7 @@ import csv
 import sys
 import random
 from pathlib import Path
+import pprint
 
 def get_file(path):
     """
@@ -64,7 +65,7 @@ def process_csv():
         else:
             print("That is an invalid file type. Please try again.")
 
-    return data_processed, file_name
+    return data_processed, file_name #return data and file name - to be used for starting quiz func
 
 #show questions in succession
 def show_random_question(question,q_bank):
@@ -76,19 +77,22 @@ def show_random_question(question,q_bank):
     they want to see a random question or not. It can be either "Y" (yes) or "N" (no)
     :return: None if the input is neither "Y" nor "N".
     """
-    number = q_bank.keys()
-    choices = q_bank.values()
+    q_list_bank = list(q_bank) #use this for the question numbers
+    # number = q_bank.keys() #gets the questions (keys) and assigns it to number variable
+    # choices = q_bank.values() ##gets the options for each q(values) and assigns it to choices
+    
     while True:
-        if question.upper() == "Y":
-            for q, choices in q_bank.items():
-                print(f"Question {number}: {q}")
+        if question.upper() == "Y": 
+            for number, (q, choices) in enumerate(q_bank.items()):
+                number = number + 1
+                print(f"Question {number}: {q}") # BUG -  this is printing it as a dict - need it formatted
                 print("Options:", choices)
             break
         elif question.upper() == "N":
             print("Ok, taking you back to the homepage")
             sys.exit()
         else:
-            print("Please enter a valid input...")
+            question = input("That is an invalid input.\nType in Y for yes or N for no: ")
   
 #answering a question    
 def answer_question(q_bank,q_answer):
@@ -126,18 +130,20 @@ def answer_question(q_bank,q_answer):
                     incorrect_questions[q_text] = q_answer[q_text]
         else:
             # print this if they run out of attempts (exits the while loop)
-            print(f"You have run out of attempts. The correct answer was {question_answer_bank[q_text]}")
+            print(f"You have run out of attempts. The correct answer was {q_answer[q_text]}")
         
         total_score += score  # add the score for the current question to the total score
         
 
     print(f"\n------------ Your final score was {total_score} ------------")
-    print(f"\nYou got {number_wrong} questions wrong.\n")
-    
     if number_wrong == 0:
         print("Well done, you got all the questions correct!") #shows a message if you got all the questions correct
         sys.exit() #stop the program as they got everything correct 
         '''change this later to give a prize...'''
+    if number_wrong == 1:
+        print(f"\nYou got {number_wrong} question wrong.\n")
+    if number_wrong > 1:
+        print(f"\nYou got {number_wrong} questions wrong.\n")
     
     return incorrect_questions
 
@@ -183,9 +189,6 @@ def reattempt_questions(incorrect_q, q_bank):
 
     return reattempt_questions, reattempt_questions_answers
 
-
-
-
 # main function to run quiz
 def start_random_quiz(data, file_name):
     """
@@ -193,19 +196,20 @@ def start_random_quiz(data, file_name):
     allows the user to answer the questions, gives the option to reattempt incorrect questions, and
     provides feedback on the quiz performance.
     """
-    start = input("Do you want to start the random quiz?\nType in Y for yes or N for no: ")
-    q_bank, q_answer = data
-    show_random_question(start,q_bank)
-    incorrect_questions = answer_question(q_bank,q_answer)
+    if file_name:
+        start = input("Do you want to start the random quiz?\nType in Y for yes or N for no: ")
+        q_bank, q_answer = data
+        show_random_question(start,q_bank)
+        incorrect_questions = answer_question(q_bank,q_answer)
     if incorrect_questions: #if there are incorrect questions in the list then run reattempt_questions
-        reattempt_choice = input("Would you like to reattempt the questions you got wrong? ")
-        if reattempt_choice == "yes":
-            print("Ok, here are your incorrect questions.\n Think carefully before answering!")
+        reattempt_choice = input("Would you like to reattempt the questions you got wrong?\n")
+        if reattempt_choice == "yes" or reattempt_choice.lower() == "y":
+            print("Ok, here are your incorrect questions.\nThink carefully before answering!")
             incorrect_reattempt_only, incorrect_reattempt_answers = reattempt_questions(incorrect_questions, q_bank)
         else:
             print("Ok, thanks for playing the quiz. You missed out on correcting the ones you got wrong though...")
             sys.exit()
-   
+    
    # attempting to re-attempt incorrect questions from a question bank. It prompts
    # the user if they would like to see the questions they couldn't answer after re-attempting them.
    # If the user chooses to see the questions, it prints them out. Then, it prompts the user if they
@@ -229,8 +233,18 @@ def start_random_quiz(data, file_name):
             print("Ok, thanks for playing the quiz!")
     print("Thanks for playing!")
 
+
 # The code is calling the `process_csv()` function to get the data from a CSV file and the file name.
 # Then, it passes the data and file name to the `start_random_quiz()` function to start the random
 # quiz.
 data,file_name = process_csv()
 start_random_quiz(data,file_name)
+
+def feedback_csv():
+    '''CSV Feedback:
+    - Total questions attempted
+    - List of attempts with answers given
+    - How many tries it took to get the right answer
+    - Option to add personal feedback into csv'''
+
+# def create_flashcard():
