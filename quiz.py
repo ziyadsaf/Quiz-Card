@@ -1,8 +1,7 @@
 import csv
 import sys
-import random
 from pathlib import Path
-import pprint
+import sqlite3
 
 def get_file(path):
     """
@@ -85,7 +84,7 @@ def show_random_question(question,q_bank):
         if question.upper() == "Y": 
             for number, (q, choices) in enumerate(q_bank.items()):
                 number = number + 1
-                print(f"Question {number}: {q}") # BUG -  this is printing it as a dict - need it formatted
+                print(f"Question {number}: {q}") 
                 print("Options:", choices)
             break
         elif question.upper() == "N":
@@ -105,15 +104,17 @@ def answer_question(q_bank,q_answer):
     total_score = 0 # initialize total_score outside the loop
     incorrect_questions = {}
     number_wrong = 0
+    questions_attempted = 0
     for q_text in q_bank:
         score = 0
         attempts = 0 # initialize the number of attempts a player can make
         correct = 1
         wrong = -1
         loop = len(q_bank)
+        questions_attempted += 1
         while attempts < 3 and loop > 0:
             answer = str(input(f"Write your answer for '{q_text}': ")) # ask for the answer in the while loop so it asks for every attempt
-            if answer == q_answer[q_text]: # if answer = answer in question_answer_bank dict
+            if answer.upper() == q_answer[q_text]: # if answer = answer in question_answer_bank dict
                 print('Correct!')
                 score += 1 # add one to score if they get a question correct
                 print(f"You received {correct} point for that question!") #give the no. of points received for the question
@@ -140,11 +141,12 @@ def answer_question(q_bank,q_answer):
         print("Well done, you got all the questions correct!") #shows a message if you got all the questions correct
         sys.exit() #stop the program as they got everything correct 
         '''change this later to give a prize...'''
+    #take into account singular and plural for question(s)
     if number_wrong == 1:
         print(f"\nYou got {number_wrong} question wrong.\n")
     if number_wrong > 1:
         print(f"\nYou got {number_wrong} questions wrong.\n")
-    
+
     return incorrect_questions
 
 def reattempt_questions(incorrect_q, q_bank):
@@ -170,7 +172,7 @@ def reattempt_questions(incorrect_q, q_bank):
             print(f"Question: {incorrect_question}")
             print("Options:", choices)
             answer = input("Your answer: ")
-            if answer == correct_answer:
+            if answer.upper() == correct_answer:
                 print("That is now correct! Well done.\nThat question will be removed from your incorrect questions list.")
                 incorrect_q.pop(incorrect_question)  # remove the incorrect question as it is now correct
                 break
@@ -186,18 +188,66 @@ def reattempt_questions(incorrect_q, q_bank):
     # if none are wrong
     if not reattempt_questions:
         print("Well done, you have now got all the questions correct!")
+        print("Your flashcards are now being created...")
 
     return reattempt_questions, reattempt_questions_answers
 
+def create_flashcard(flashcard_questions):
+    """
+    Create flashcards for incorrect questions.
+    """
+    if not incorrect_questions:
+        print("No flashcards to create. You got all the questions correct!")
+        return
+
+    print("\nFlashcards for Incorrect Questions:")
+    for index, (question, correct_answer) in enumerate(flashcard_questions.items(), start=1):
+        print(f"\nFlashcard {index}:")
+        print(f"Question: {question}")
+        print(f"Correct Answer: {correct_answer}")
+
+    save_flashcards = input("\nDo you want to save these flashcards? (yes/no): ")
+    if save_flashcards.lower() == "yes":
+        save_flashcards(flashcard_questions)
+        print("Flashcards saved to file.")
+    else:
+        print("Flashcards not saved. You can review them here.")
+
+def save_flashcards(flashcards):
+    """
+    Save flashcards to db
+    """
+    db_file = "flashcards.db"
+
+    # Connect to the SQLite database
+    connection = sqlite3.connect(db_file)
+    cursor = connection.cursor()
+
+    # Read and execute the SQL script to create the table
+    sql_file_path = Path("flashcards.sql")
+    if sql_file_path.exists():
+        with open(sql_file_path, "r") as sql_file:
+            sql_script = sql_file.read()
+            cursor.executescript(sql_script)
+
+    # Insert flashcards into the database
+    for question, correct_answer in flashcards.items():
+        cursor.execute("INSERT INTO flashcards (question, correct_answer) VALUES (?, ?)",
+                       (question, correct_answer))
+
+    # Commit the changes and close the connection
+    connection.commit()
+    connection.close()
+
 # main function to run quiz
-def start_random_quiz(data, file_name):
+def start_quiz(data, file_name):
     """
     The function "start_random_quiz" prompts the user to start a random quiz, displays random questions,
     allows the user to answer the questions, gives the option to reattempt incorrect questions, and
     provides feedback on the quiz performance.
     """
     if file_name:
-        start = input("Do you want to start the random quiz?\nType in Y for yes or N for no: ")
+        start = input("Do you want to start the quiz?\nType in Y for yes or N for no: ")
         q_bank, q_answer = data
         show_random_question(start,q_bank)
         incorrect_questions = answer_question(q_bank,q_answer)
@@ -210,35 +260,43 @@ def start_random_quiz(data, file_name):
             print("Ok, thanks for playing the quiz. You missed out on correcting the ones you got wrong though...")
             sys.exit()
     
-   # attempting to re-attempt incorrect questions from a question bank. It prompts
-   # the user if they would like to see the questions they couldn't answer after re-attempting them.
-   # If the user chooses to see the questions, it prints them out. Then, it prompts the user if they
-   # would like to see the answers for these questions. If the user chooses to see the answers, it
-   # prints them out. Finally, it prints a thank you message.
+    """attempting to re-attempt incorrect questions from a question bank. It prompts
+   the user if they would like to see the questions they couldn't answer after re-attempting them.
+   If the user chooses to see the questions, it prints them out. Then, it prompts the user if they
+   would like to see the answers for these questions. If the user chooses to see the answers, it
+   prints them out. Finally, it prints a thank you message."""
     
      #separate tuple from reattempt_questions
     if incorrect_reattempt_only or incorrect_reattempt_answers:
-        wrong_questions = str(input("Would you like to see the questions you couldn't do after re-attempting them?"))
+        wrong_questions = str(input("Would you like to see the questions you couldn't do after re-attempting them? Please answer yes or no"))
         if wrong_questions.lower() == "yes":
             print("Here are the questions you couldn't answer...\n")
             for incorrect_reattempt in incorrect_reattempt_only:
                 print(incorrect_reattempt)
+
             show_answer = input("Would you like to look at the answers for these questions? ")
+       
             if show_answer.lower() == "yes":
                 for question, answer in incorrect_reattempt_answers.items():
                     print(f"Question: {question}, Answer: {answer}")
             else:
                 print("Ok, thanks for playing the quiz!")
+        elif wrong_questions.lower() == "no":
+            print("Ok, thanks for playing. You can always go through the flash cards for the questions you got wrong.")
         else:
-            print("Ok, thanks for playing the quiz!")
+            wrong_questions = input("That is an invalid input")
+    
     print("Thanks for playing!")
 
+    return incorrect_questions
 
 # The code is calling the `process_csv()` function to get the data from a CSV file and the file name.
 # Then, it passes the data and file name to the `start_random_quiz()` function to start the random
 # quiz.
 data,file_name = process_csv()
-start_random_quiz(data,file_name)
+incorrect_questions = start_quiz(data,file_name)
+create_flashcard(incorrect_questions)
+save_flashcards(incorrect_questions)
 
 def feedback_csv():
     '''CSV Feedback:
@@ -246,5 +304,5 @@ def feedback_csv():
     - List of attempts with answers given
     - How many tries it took to get the right answer
     - Option to add personal feedback into csv'''
+    
 
-# def create_flashcard():
