@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS flashcard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question VARCHAR,
+    answer VARCHAR
+)
