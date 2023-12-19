@@ -55,7 +55,7 @@ def process_csv():
     while True:
     #ask the user what the file path is for the data file to be processed for the quiz
         file_name = str(input("Please enter the file name of the .csv file: "))
-        if file_name.endswith(".csv"):
+        if file_name.lower().endswith(".csv"):
             path = Path(file_name)
             reader_file = get_file(path)
             #process the csv file
@@ -173,8 +173,9 @@ def reattempt_questions(incorrect_q, q_bank):
             print("Options:", choices)
             answer = input("Your answer: ")
             if answer.upper() == correct_answer:
-                print("That is now correct! Well done.\nThat question will be removed from your incorrect questions list.")
-                incorrect_q.pop(incorrect_question)  # remove the incorrect question as it is now correct
+                print("Correct!")
+                #print("That is now correct! Well done.\nThat question will be removed from your incorrect questions list.")
+                #incorrect_q.pop(incorrect_question)  # don't need this for now as flashcard needs incorrect qs. remove the incorrect question as it is now correct
                 break
             else:
                 attempts += 1
@@ -188,7 +189,7 @@ def reattempt_questions(incorrect_q, q_bank):
     # if none are wrong
     if not reattempt_questions:
         print("Well done, you have now got all the questions correct!")
-        print("Your flashcards are now being created...")
+       
 
     return reattempt_questions, reattempt_questions_answers
 
@@ -196,22 +197,13 @@ def create_flashcard(flashcard_questions):
     """
     Create flashcards for incorrect questions.
     """
-    if not incorrect_questions:
-        print("No flashcards to create. You got all the questions correct!")
-        return
-
     print("\nFlashcards for Incorrect Questions:")
-    for index, (question, correct_answer) in enumerate(flashcard_questions.items(), start=1):
-        print(f"\nFlashcard {index}:")
+    for index, (question, correct_answer) in enumerate(flashcard_questions.items(),1):
+        print(f"\n---Flashcard {index}---\n")
         print(f"Question: {question}")
         print(f"Correct Answer: {correct_answer}")
 
-    save_flashcards = input("\nDo you want to save these flashcards? (yes/no): ")
-    if save_flashcards.lower() == "yes":
-        save_flashcards(flashcard_questions)
-        print("Flashcards saved to file.")
-    else:
-        print("Flashcards not saved. You can review them here.")
+    return flashcard_questions
 
 def save_flashcards(flashcards):
     """
@@ -232,7 +224,7 @@ def save_flashcards(flashcards):
 
     # Insert flashcards into the database
     for question, correct_answer in flashcards.items():
-        cursor.execute("INSERT INTO flashcards (question, correct_answer) VALUES (?, ?)",
+        cursor.execute("INSERT INTO flashcard (question, answer) VALUES (?, ?)",
                        (question, correct_answer))
 
     # Commit the changes and close the connection
@@ -294,9 +286,26 @@ def start_quiz(data, file_name):
 # Then, it passes the data and file name to the `start_random_quiz()` function to start the random
 # quiz.
 data,file_name = process_csv()
-incorrect_questions = start_quiz(data,file_name)
-create_flashcard(incorrect_questions)
-save_flashcards(incorrect_questions)
+incorrect_questions = start_quiz(data, file_name)
+# Create flashcards only if there are incorrect questions
+if incorrect_questions:
+    print("Your flashcards are now being created...")
+    flashcard_questions = create_flashcard(incorrect_questions)
+    valid = True
+    while valid:
+        save_flashcards_question = input("\nDo you want to save these flashcards? (yes/no): ")
+        if save_flashcards_question.lower() == "yes":
+            save_flashcards(flashcard_questions)
+            print("Flashcards saved to file.")
+            valid = False
+        elif save_flashcards_question.lower() == "no":
+            print("Flashcards not saved. You can review them here.")
+            valid = False
+        else:
+            save_flashcards_question = input("\nThat is an invalid input. ")
+else:
+    print("No flashcards to create, you got everything correct first time! Congratulations")
+    print("Creating feedback file...")
 
 def feedback_csv():
     '''CSV Feedback:
