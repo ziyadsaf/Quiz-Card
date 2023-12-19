@@ -36,12 +36,13 @@ def get_data(reader, question_bank = {},question_answer_bank = {}):
     answer text
     """
     for row in reader:
-        question_text = str(row[0])
-        choice1 = str(row[1])
-        choice2 = str(row[2])
-        choice3 = str(row[3])
-        choice4 = str(row[4])
-        answer_text = str(row[5])
+        question_number = str(row[0])
+        question_text = str(row[1])
+        choice1 = str(row[2])
+        choice2 = str(row[3])
+        choice3 = str(row[4])
+        choice4 = str(row[5])
+        answer_text = str(row[6])
         question_bank[question_text] = {choice1,choice2,choice3,choice4}
         question_answer_bank[question_text] = answer_text
     return question_bank, question_answer_bank
@@ -220,12 +221,17 @@ def save_flashcards(flashcards):
     if sql_file_path.exists():
         with open(sql_file_path, "r") as sql_file:
             sql_script = sql_file.read()
-            cursor.executescript(sql_script)
+            db = cursor.executescript(sql_script)
 
     # Insert flashcards into the database
     for question, correct_answer in flashcards.items():
-        cursor.execute("INSERT INTO flashcard (question, answer) VALUES (?, ?)",
+        cursor.execute("SELECT question FROM flashcard WHERE question = ?", (question)) #checking if the question exists - question variable is passed in as a tuple
+        result = cursor.fetchone()
+        if result is None:
+            cursor.execute("INSERT INTO flashcard (question, answer) VALUES (?, ?)",
                        (question, correct_answer))
+        else:
+            print(f"Flashcard already created for question {question}. Please revise this before attempting the quiz again")
 
     # Commit the changes and close the connection
     connection.commit()
@@ -244,13 +250,18 @@ def start_quiz(data, file_name):
         show_random_question(start,q_bank)
         incorrect_questions = answer_question(q_bank,q_answer)
     if incorrect_questions: #if there are incorrect questions in the list then run reattempt_questions
-        reattempt_choice = input("Would you like to reattempt the questions you got wrong?\n")
-        if reattempt_choice == "yes" or reattempt_choice.lower() == "y":
-            print("Ok, here are your incorrect questions.\nThink carefully before answering!")
-            incorrect_reattempt_only, incorrect_reattempt_answers = reattempt_questions(incorrect_questions, q_bank)
-        else:
-            print("Ok, thanks for playing the quiz. You missed out on correcting the ones you got wrong though...")
-            sys.exit()
+        valid = True
+        while valid:
+            reattempt_choice = input("Would you like to reattempt the questions you got wrong?\n")
+            if reattempt_choice.lower() == "yes" or reattempt_choice.lower() == "y":
+                print("Ok, here are your incorrect questions.\nThink carefully before answering!")
+                incorrect_reattempt_only, incorrect_reattempt_answers = reattempt_questions(incorrect_questions, q_bank)
+                valid = False
+            elif reattempt_choice.lower() == "no" or reattempt_choice.lower() == "n":
+                print("Ok, thanks for playing the quiz. You missed out on correcting the ones you got wrong though...")
+                sys.exit()
+            else:
+                reattempt_choice = input("That is an invalid input, please try again by answering yes or no")
     
     """attempting to re-attempt incorrect questions from a question bank. It prompts
    the user if they would like to see the questions they couldn't answer after re-attempting them.
