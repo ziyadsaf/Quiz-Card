@@ -7,9 +7,6 @@ def get_file(path):
     """
     The function `get_file` reads a file at the given path, splits the lines, and uses a CSV reader to
     read the contents.
-    
-    :param path: The `path` parameter is the file path to the CSV file that you want to read. It should
-    be a string representing the file path
     """
 
     lines = path.read_text().splitlines()
