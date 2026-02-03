@@ -157,8 +157,88 @@ class Quiz:
 
 
 class Flashcard:
-    def __init__(self, flashcards):
-        self.flashcards = flashcards
+    DB_FILE = "flashcards.db"
+
+    def __init__(self, flashcards=None):
+        self.flashcards = flashcards if flashcards else {}
+
+    @classmethod
+    def load_flashcards(cls):
+        """
+        Loads all flashcards from the database and returns a Flashcard instance.
+        """
+        conn = sqlite3.connect(cls.DB_FILE)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='flashcard'")
+        if cursor.fetchone() is None:
+            conn.close()
+            return cls({})
+
+        cursor.execute("SELECT id, question, answer FROM flashcard")
+        rows = cursor.fetchall()
+        conn.close()
+
+        flashcards = {row[1]: {"id": row[0], "answer": row[2]} for row in rows}
+        instance = cls({q: data["answer"] for q, data in flashcards.items()})
+        instance._flashcard_ids = {q: data["id"] for q, data in flashcards.items()}
+        return instance
+
+    def review_flashcards(self):
+        """
+        Interactive flashcard review session. Shows question, waits for user,
+        then reveals the answer. Offers option to delete mastered cards.
+        """
+        if not self.flashcards:
+            print("\nNo flashcards to review. Take a quiz first to generate some!")
+            return
+
+        print(f"\n========== Flashcard Review ==========")
+        print(f"You have {len(self.flashcards)} flashcard(s) to review.\n")
+
+        cards_to_delete = []
+
+        for i, (question, answer) in enumerate(self.flashcards.items(), 1):
+            print(f"\n--- Card {i} of {len(self.flashcards)} ---")
+            print(f"\nQuestion: {question}")
+            input("\nPress Enter to reveal the answer...")
+            print(f"Answer: {answer}")
+
+            while True:
+                response = input("\nDid you get it right? (Y/N) or 'D' to delete this card: ").upper()
+                if response == "Y":
+                    print("Great job!")
+                    break
+                elif response == "N":
+                    print("Keep practicing!")
+                    break
+                elif response == "D":
+                    cards_to_delete.append(question)
+                    print("Card marked for deletion.")
+                    break
+                else:
+                    print("Invalid input. Please enter Y, N, or D.")
+
+        if cards_to_delete:
+            print(f"\nDeleting {len(cards_to_delete)} mastered card(s)...")
+            for question in cards_to_delete:
+                self.delete_flashcard(question)
+            print("Cards deleted successfully!")
+
+        print("\n========== Review Complete ==========")
+
+    def delete_flashcard(self, question):
+        """
+        Deletes a flashcard from the database by question text.
+        """
+        conn = sqlite3.connect(self.DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM flashcard WHERE question = ?", (question,))
+        conn.commit()
+        conn.close()
+
+        if question in self.flashcards:
+            del self.flashcards[question]
 
     def create_flashcard(self):
         """
@@ -202,7 +282,22 @@ class Flashcard:
         conn.close()
 
 
-def main():
+def show_menu():
+    """
+    Displays the main menu and returns the user's choice.
+    """
+    print("\n========== Quiz-Card ==========")
+    print("1. Take a Quiz")
+    print("2. Review Flashcards")
+    print("3. Exit")
+    print("================================")
+    return input("Choose an option (1-3): ")
+
+
+def run_quiz():
+    """
+    Runs the quiz flow: load CSV, answer questions, reattempt, and save flashcards.
+    """
     quiz = Quiz()
     quiz.process_csv()
     quiz.q_bank, quiz.q_answer = quiz.data
@@ -223,6 +318,30 @@ def main():
         print("Flashcards saved to file.")
     else:
         print("No flashcards to create, you got everything correct first time! Congratulations")
+
+
+def review_flashcards():
+    """
+    Loads and reviews saved flashcards from the database.
+    """
+    flashcards = Flashcard.load_flashcards()
+    flashcards.review_flashcards()
+
+
+def main():
+    while True:
+        choice = show_menu()
+
+        if choice == "1":
+            run_quiz()
+        elif choice == "2":
+            review_flashcards()
+        elif choice == "3":
+            print("Goodbye!")
+            sys.exit()
+        else:
+            print("Invalid option. Please choose 1, 2, or 3.")
+
 
 if __name__ == "__main__":
     main()
